@@ -32,27 +32,33 @@ def main():
     url = "https://switch-bot.com"
     response = requests.get(url, headers=headers)
     
-    if response.status_code != 200:
-        raise RuntimeError(f"API 호출 실패 (상태코드 {response.status_code}): {response.text}")
+    print(f"HTTP 상태 코드: {response.status_code}")
+    print(f"응답 원본 내용: {repr(response.text)}")
+
+    if not response.text.strip():
+        raise RuntimeError("SwitchBot 서버가 빈 응답을 보냈습니다. GitHub Secrets의 TOKEN과 SECRET 값이 정확히 복사되었는지 확인해 주세요!")
 
     res = response.json()
-    devices = res.get("body", {}).get("deviceList", [])
+    if res.get("statusCode") != 100:
+        raise RuntimeError(f"SwitchBot API 오류: {res}")
 
+    devices = res.get("body", {}).get("deviceList", [])
     temp, humidity, co2, power_w, plug_state = None, None, None, None, None
 
     for dev in devices:
         dev_id = dev["deviceId"]
         dev_type = dev.get("deviceType", "")
         status_url = f"https://switch-bot.com/{dev_id}/status"
-        status = requests.get(status_url, headers=headers).json().get("body", {})
-
-        if "CO2" in dev_type or "Meter" in dev_type:
-            temp = status.get("temperature")
-            humidity = status.get("humidity")
-            co2 = status.get("CO2")
-        elif "Plug" in dev_type:
-            power_w = status.get("weight")
-            plug_state = status.get("power")
+        status_res = requests.get(status_url, headers=headers)
+        if status_res.text.strip():
+            status = status_res.json().get("body", {})
+            if "CO2" in dev_type or "Meter" in dev_type:
+                temp = status.get("temperature")
+                humidity = status.get("humidity")
+                co2 = status.get("CO2")
+            elif "Plug" in dev_type:
+                power_w = status.get("weight")
+                plug_state = status.get("power")
 
     jst = timezone(timedelta(hours=9))
     now_str = datetime.now(jst).strftime("%Y-%m-%d %H:%M:%S")
