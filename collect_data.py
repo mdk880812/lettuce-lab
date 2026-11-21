@@ -11,6 +11,9 @@ import requests
 TOKEN = os.environ["SWITCHBOT_TOKEN"].strip()
 SECRET = os.environ["SWITCHBOT_SECRET"].strip()
 
+# 브라우저가 URL을 임의로 수정하지 못하도록 문자열 결합으로 생성
+BASE_URL = "https://" + "api." + "switch-bot.com" + "/v1.1"
+
 def get_headers():
     nonce = str(uuid.uuid4())
     t = int(round(time.time() * 1000))
@@ -29,16 +32,8 @@ def get_headers():
 
 def main():
     headers = get_headers()
-    url = "https://switch-bot.com"
-    response = requests.get(url, headers=headers)
+    res = requests.get(f"{BASE_URL}/devices", headers=headers).json()
     
-    print(f"HTTP 상태 코드: {response.status_code}")
-    print(f"응답 원본 내용: {repr(response.text)}")
-
-    if not response.text.strip():
-        raise RuntimeError("SwitchBot 서버가 빈 응답을 보냈습니다. GitHub Secrets의 TOKEN과 SECRET 값이 정확히 복사되었는지 확인해 주세요!")
-
-    res = response.json()
     if res.get("statusCode") != 100:
         raise RuntimeError(f"SwitchBot API 오류: {res}")
 
@@ -48,17 +43,15 @@ def main():
     for dev in devices:
         dev_id = dev["deviceId"]
         dev_type = dev.get("deviceType", "")
-        status_url = f"https://switch-bot.com/{dev_id}/status"
-        status_res = requests.get(status_url, headers=headers)
-        if status_res.text.strip():
-            status = status_res.json().get("body", {})
-            if "CO2" in dev_type or "Meter" in dev_type:
-                temp = status.get("temperature")
-                humidity = status.get("humidity")
-                co2 = status.get("CO2")
-            elif "Plug" in dev_type:
-                power_w = status.get("weight")
-                plug_state = status.get("power")
+        status = requests.get(f"{BASE_URL}/devices/{dev_id}/status", headers=headers).json().get("body", {})
+
+        if "CO2" in dev_type or "Meter" in dev_type:
+            temp = status.get("temperature")
+            humidity = status.get("humidity")
+            co2 = status.get("CO2")
+        elif "Plug" in dev_type:
+            power_w = status.get("weight")
+            plug_state = status.get("power")
 
     jst = timezone(timedelta(hours=9))
     now_str = datetime.now(jst).strftime("%Y-%m-%d %H:%M:%S")
