@@ -8,8 +8,8 @@ import csv
 from datetime import datetime, timezone, timedelta
 import requests
 
-TOKEN = os.environ["SWITCHBOT_TOKEN"]
-SECRET = os.environ["SWITCHBOT_SECRET"]
+TOKEN = os.environ["SWITCHBOT_TOKEN"].strip()
+SECRET = os.environ["SWITCHBOT_SECRET"].strip()
 
 def get_headers():
     nonce = str(uuid.uuid4())
@@ -29,7 +29,13 @@ def get_headers():
 
 def main():
     headers = get_headers()
-    res = requests.get("https://switch-bot.com", headers=headers).json()
+    url = "https://switch-bot.com"
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code != 200:
+        raise RuntimeError(f"API 호출 실패 (상태코드 {response.status_code}): {response.text}")
+
+    res = response.json()
     devices = res.get("body", {}).get("deviceList", [])
 
     temp, humidity, co2, power_w, plug_state = None, None, None, None, None
@@ -37,7 +43,8 @@ def main():
     for dev in devices:
         dev_id = dev["deviceId"]
         dev_type = dev.get("deviceType", "")
-        status = requests.get(f"https://switch-bot.com/{dev_id}/status", headers=headers).json().get("body", {})
+        status_url = f"https://switch-bot.com/{dev_id}/status"
+        status = requests.get(status_url, headers=headers).json().get("body", {})
 
         if "CO2" in dev_type or "Meter" in dev_type:
             temp = status.get("temperature")
