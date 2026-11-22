@@ -9,3 +9,4 @@
 | 일차 | 날짜 | 상추 상태 및 외관 변화 | 내가 해준 조치 (물·양액·전등) | 성장 사진 |
 | :---: | :---: | :--- | :--- | :---: |
 | **Day 1** | 11/21 (토) | 3구 스펀지에 씨앗 파종 완료 | 수돗물 주입, 투명 미니 컵 덮기, 빈 3구 테이핑, 온도계, 스위치 허브 세팅, 데이터 수집 설정 | <img width="1634" height="1140" alt="day1" src="https://github.com/user-attachments/assets/7e0208b9-b2ec-435e-883d-1027db40c340" />|
+| **Day 2** | 11/22 (일) | 변화없음 | LED등을 미리 설치하려고 했으나, 등의 지지대가 너무 약해서, 새 지지대 주문. 지지대가 올때까지는 자연광을 사용할 예정 |<img width="2016" height="1512" alt="day2" src="https://github.com/user-attachments/assets/ed1e9e6c-800c-4b44-bbcb-eca358db8fb4" />|
