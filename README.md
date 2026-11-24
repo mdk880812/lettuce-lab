@@ -11,3 +11,5 @@
 | **Day 1** | 11/21 (토) | 3구 스펀지에 씨앗 파종 완료 | 수돗물 주입, 투명 미니 컵 덮기, 빈 3구 테이핑, 온도계, 스위치 허브 세팅, 데이터 수집 설정 | <img width="1634" height="1140" alt="day1" src="https://github.com/user-attachments/assets/7e0208b9-b2ec-435e-883d-1027db40c340" />|
 | **Day 2** | 11/22 (일) | 변화없음 | LED등을 미리 설치하려고 했으나, 등의 지지대가 너무 약해서, 새 지지대 주문. 지지대가 올때까지는 자연광을 사용할 예정 |<img width="2016" height="1512" alt="day2" src="https://github.com/user-attachments/assets/ed1e9e6c-800c-4b44-bbcb-eca358db8fb4" />|
 | **Day 3** | 11/23 (월) | 3구 모두 하얀 뿌리 발아 확인 | 오전07시 ~ 오후19시에 자연광에 노출시킴. 촬영용 거치대 제작 |<img width="640" height="480" alt="day3" src="https://github.com/user-attachments/assets/782694b0-3326-4fcd-98dd-7d64660ffcaf" />|
+| **Day 4** | 11/24 (화) | 3구 모두 작은 연두색 떡잎이 나옴. 하얀 뿌리가 많이 자람 | 플라스틱 뚜껑 제거, 촬영용 거치대 제작 및 촬영 자동화(08, 12, 16, 20시 촬영), 수조에 에어펌프 설치(24시간 가동), 전등 설치(07~23시 가동)|<img width="2016" height="1512" alt="day4" src="https://github.com/user-attachments/assets/2a51bc43-5bc5-4698-bda9-7074e7adca43" />　<img width="2415" height="1913" alt="day4_lab" src="https://github.com/user-attachments/assets/1e4d49c1-e92f-4a91-b18a-e5bd058330a6" />|
+
