@@ -60,3 +60,4 @@ timestamp_jst,temperature_c,humidity_pct,co2_ppm,plug_state,power_w
 2026-11-24 11:00:00,19,59,556,off,0
 2026-11-24 12:01:10,19.3,59,574,off,0
 2026-11-24 13:01:17,19.7,59,470,off,0
+2026-11-24 14:01:10,20,66,571,off,0
