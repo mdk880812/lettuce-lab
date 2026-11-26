@@ -2,41 +2,17 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="상추카메라">
-  <title>상추 스마트팜 무인 카메라</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>상추 스마트팜 무음 뷰파인더</title>
   <style>
-    body { background: #000; color: #0f0; font-family: monospace; padding: 20px 16px; text-align: center; margin: 0; }
-    video { width: 100%; max-width: 480px; border: 1px solid #333; border-radius: 8px; margin-top: 8px; }
-    button { font-size: 15px; padding: 12px 14px; margin: 5px; border-radius: 6px; border: none; color: #fff; font-weight: bold; }
-    #btnStart { background: #28a745; }
-    #btnStop { background: #dc3545; }
-    #btnTest { background: #007bff; }
-    #status { margin-top: 8px; font-size: 14px; color: #ffd700; font-weight: bold; }
-    #log { margin-top: 10px; font-size: 13px; color: #aaa; white-space: pre-line; }
+    body { background: #000; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+    video { width: 100%; height: 100%; object-fit: cover; }
   </style>
 </head>
 <body>
-  <h3>Lettuce-Lab 무음 정각 카메라</h3>
   <video id="video" autoplay playsinline muted></video>
-  <canvas id="canvas" style="display:none;"></canvas>
-  <div>
-    <button id="btnStart" onclick="manualStart()">정각 자동 감시 시작</button>
-    <button id="btnStop" onclick="stopMonitor()">자동 감시 정지</button>
-    <button id="btnTest" onclick="captureAndSend()">1장 테스트 업로드</button>
-  </div>
-  <div id="status">현재 상태: 대기 중 (감시 꺼짐)</div>
-  <div id="log">카메라 연결 중...</div>
-
   <script>
-    const TARGET_SLOTS = ["08:00", "12:00", "16:00", "20:00", "22:40", "22:52"];
-    let lastUploadedKey = localStorage.getItem("last_uploaded_key") || "";
-    let isCameraReady = false;
-    let monitorTimer = null;
-
-    async function initCamera() {
+    async function startViewfinder() {
       const video = document.getElementById("video");
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -48,90 +24,8 @@
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
         video.srcObject = stream;
       }
-      video.onloadeddata = () => {
-        setTimeout(() => {
-          isCameraReady = true;
-          log("후면 카메라 예열 완료 (0dB 무음 준비됨)");
-          if (location.search.includes("watch=1") || localStorage.getItem("auto_monitor") === "on") {
-            startMonitor();
-          }
-        }, 1500);
-      };
     }
-
-    function log(msg) {
-      const now = new Date().toLocaleTimeString("ko-KR", { hour12: false });
-      document.getElementById("log").innerText = `[${now}] ${msg}\n` + document.getElementById("log").innerText.slice(0, 400);
-    }
-
-    function getLocalParts() {
-      const now = new Date();
-      const hh = String(now.getHours()).padStart(2, "0");
-      const mm = String(now.getMinutes()).padStart(2, "0");
-      return {
-        hhmm: `${hh}:${mm}`,
-        key: `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}_${hh}:${mm}`
-      };
-    }
-
-    function captureAndSend() {
-      const video = document.getElementById("video");
-      if (!isCameraReady || video.videoWidth === 0) {
-        log("카메라 예열 중... 1.5초 후 촬영합니다.");
-        setTimeout(captureAndSend, 1500);
-        return;
-      }
-      const canvas = document.getElementById("canvas");
-      const ctx = canvas.getContext("2d");
-
-      canvas.width = video.videoHeight;
-      canvas.height = video.videoWidth;
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.rotate(-Math.PI / 2);
-      ctx.drawImage(video, -video.videoWidth / 2, -video.videoHeight / 2);
-
-      const base64Data = canvas.toDataURL("image/jpeg", 0.75).split(",").pop();
-      log("무음 캡처 완료 -> 업로드 실행!");
-      window.location.href = "shortcuts://run-shortcut?name=" + encodeURIComponent("업로드") + "&input=text&text=" + encodeURIComponent(base64Data);
-    }
-
-    function manualStart() {
-      lastUploadedKey = "";
-      localStorage.removeItem("last_uploaded_key");
-      startMonitor();
-    }
-
-    function startMonitor() {
-      localStorage.setItem("auto_monitor", "on");
-      document.getElementById("status").innerText = "현재 상태: 정각 자동 감시 작동 중 (08, 12, 16, 20시)";
-      document.getElementById("btnStart").style.background = "#555";
-      document.getElementById("btnStart").innerText = "자동 감시 작동 중";
-      if (monitorTimer) return;
-
-      log("자동 감시 시작됨");
-      monitorTimer = setInterval(() => {
-        const { hhmm, key } = getLocalParts();
-        if (TARGET_SLOTS.includes(hhmm) && lastUploadedKey !== key) {
-          lastUploadedKey = key;
-          localStorage.setItem("last_uploaded_key", key);
-          captureAndSend();
-        }
-      }, 5000);
-    }
-
-    function stopMonitor() {
-      localStorage.setItem("auto_monitor", "off");
-      if (monitorTimer) {
-        clearInterval(monitorTimer);
-        monitorTimer = null;
-      }
-      document.getElementById("status").innerText = "현재 상태: 대기 중 (감시 정지됨)";
-      document.getElementById("btnStart").style.background = "#28a745";
-      document.getElementById("btnStart").innerText = "정각 자동 감시 시작";
-      log("자동 감시 정지됨");
-    }
-
-    initCamera();
+    startViewfinder();
   </script>
 </body>
 </html>
