@@ -31,7 +31,7 @@
   <div id="log">카메라 연결 중...</div>
 
   <script>
-    const TARGET_HOURS = new Array(8, 12, 16, 20, 21);
+    const TEST_SLOTS = ["22:13", "22:30"];
     let lastUploadedKey = localStorage.getItem("last_uploaded_key") || "";
     let isCameraReady = false;
     let monitorTimer = null;
@@ -51,7 +51,7 @@
       video.onloadeddata = () => {
         setTimeout(() => {
           isCameraReady = true;
-          log("PWA 후면 카메라 예열 완료 (0dB 무음 준비됨)");
+          log("후면 카메라 예열 완료 (0dB 무음 준비됨)");
           if (localStorage.getItem("auto_monitor") === "on") {
             startMonitor();
           }
@@ -66,10 +66,11 @@
 
     function getLocalParts() {
       const now = new Date();
+      const hh = String(now.getHours()).padStart(2, "0");
+      const mm = String(now.getMinutes()).padStart(2, "0");
       return {
-        hour: now.getHours(),
-        min: now.getMinutes(),
-        key: `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}_${now.getHours()}_${now.getMinutes()}`
+        hhmm: `${hh}:${mm}`,
+        key: `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}_${hh}:${mm}`
       };
     }
 
@@ -102,15 +103,15 @@
 
     function startMonitor() {
       localStorage.setItem("auto_monitor", "on");
-      document.getElementById("status").innerText = "현재 상태: 정각 자동 감시 작동 중 (08, 12, 16, 20시)";
+      document.getElementById("status").innerText = "현재 상태: 테스트 감시 작동 중 (22:13, 22:30)";
       document.getElementById("btnStart").style.background = "#555";
       document.getElementById("btnStart").innerText = "자동 감시 작동 중";
       if (monitorTimer) return;
 
-      log("정각 자동 감시 시작됨");
+      log("자동 감시 시작됨 (22:13 / 22:30 대기)");
       monitorTimer = setInterval(() => {
-        const { hour, min, key } = getLocalParts();
-        if (TARGET_HOURS.includes(hour) && min === 59 && lastUploadedKey !== key) {
+        const { hhmm, key } = getLocalParts();
+        if (TEST_SLOTS.includes(hhmm) && lastUploadedKey !== key) {
           lastUploadedKey = key;
           localStorage.setItem("last_uploaded_key", key);
           captureAndSend();
@@ -127,7 +128,7 @@
       document.getElementById("status").innerText = "현재 상태: 대기 중 (감시 정지됨)";
       document.getElementById("btnStart").style.background = "#28a745";
       document.getElementById("btnStart").innerText = "정각 자동 감시 시작";
-      log("정각 자동 감시 정지됨");
+      log("자동 감시 정지됨");
     }
 
     initCamera();
