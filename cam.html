@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="상추카메라">
-  <title>상추 스마트팜 PWA 카메라</title>
+  <title>상추 스마트팜 무인 카메라</title>
   <style>
     body { background: #000; color: #0f0; font-family: monospace; padding: 20px 16px; text-align: center; margin: 0; }
     video { width: 100%; max-width: 480px; border: 1px solid #333; border-radius: 8px; margin-top: 8px; }
@@ -19,7 +19,7 @@
   </style>
 </head>
 <body>
-  <h3>Lettuce-Lab PWA 무음 카메라</h3>
+  <h3>Lettuce-Lab 무음 정각 카메라</h3>
   <video id="video" autoplay playsinline muted></video>
   <canvas id="canvas" style="display:none;"></canvas>
   <div>
@@ -31,7 +31,7 @@
   <div id="log">카메라 연결 중...</div>
 
   <script>
-    const TEST_SLOTS = ["22:13", "22:30"];
+    const TARGET_SLOTS = ["08:00", "12:00", "16:00", "20:00", "22:40", "22:52"];
     let lastUploadedKey = localStorage.getItem("last_uploaded_key") || "";
     let isCameraReady = false;
     let monitorTimer = null;
@@ -52,7 +52,7 @@
         setTimeout(() => {
           isCameraReady = true;
           log("후면 카메라 예열 완료 (0dB 무음 준비됨)");
-          if (localStorage.getItem("auto_monitor") === "on") {
+          if (location.search.includes("watch=1") || localStorage.getItem("auto_monitor") === "on") {
             startMonitor();
           }
         }, 1500);
@@ -103,15 +103,15 @@
 
     function startMonitor() {
       localStorage.setItem("auto_monitor", "on");
-      document.getElementById("status").innerText = "현재 상태: 테스트 감시 작동 중 (22:13, 22:30)";
+      document.getElementById("status").innerText = "현재 상태: 정각 자동 감시 작동 중 (08, 12, 16, 20시)";
       document.getElementById("btnStart").style.background = "#555";
       document.getElementById("btnStart").innerText = "자동 감시 작동 중";
       if (monitorTimer) return;
 
-      log("자동 감시 시작됨 (22:13 / 22:30 대기)");
+      log("자동 감시 시작됨");
       monitorTimer = setInterval(() => {
         const { hhmm, key } = getLocalParts();
-        if (TEST_SLOTS.includes(hhmm) && lastUploadedKey !== key) {
+        if (TARGET_SLOTS.includes(hhmm) && lastUploadedKey !== key) {
           lastUploadedKey = key;
           localStorage.setItem("last_uploaded_key", key);
           captureAndSend();
