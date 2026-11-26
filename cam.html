@@ -110,7 +110,7 @@
       log("정각 자동 감시 시작됨");
       monitorTimer = setInterval(() => {
         const { hour, min, key } = getLocalParts();
-        if (TARGET_HOURS.includes(hour) && min === 44 && lastUploadedKey !== key) {
+        if (TARGET_HOURS.includes(hour) && min === 48 && lastUploadedKey !== key) {
           lastUploadedKey = key;
           localStorage.setItem("last_uploaded_key", key);
           captureAndSend();
