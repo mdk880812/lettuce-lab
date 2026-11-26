@@ -49,7 +49,9 @@
         setTimeout(() => {
           isCameraReady = true;
           log("후면 카메라 예열 완료 (0dB 무음 준비됨)");
-          if (localStorage.getItem("auto_monitor") === "on") {
+          if (location.search.includes("auto=1")) {
+            captureAndSend();
+          } else if (localStorage.getItem("auto_monitor") === "on") {
             startMonitor();
           }
         }, 1500);
