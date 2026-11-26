@@ -33,4 +33,5 @@ jobs:
           git config --local user.name "github-actions[bot]"
           git add farm_data.csv
           git commit -m "Log sensor data" || exit 0
+          git pull --rebase
           git push
