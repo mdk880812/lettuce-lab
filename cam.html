@@ -3,13 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>상추 스마트팜 무인 카메라</title>
+  <title>상추 스마트팜 무음 카메라</title>
   <style>
     body { background: #000; color: #0f0; font-family: monospace; padding: 16px; text-align: center; }
     video { width: 100%; max-width: 480px; border: 1px solid #333; border-radius: 8px; }
-    input, button { font-size: 16px; padding: 10px; margin: 6px; border-radius: 6px; border: none; }
-    input { width: 85%; background: #222; color: #fff; }
-    button { background: #28a745; color: #fff; font-weight: bold; }
+    button { font-size: 16px; padding: 12px 20px; margin: 8px; border-radius: 6px; border: none; background: #28a745; color: #fff; font-weight: bold; }
     #log { margin-top: 12px; font-size: 13px; color: #aaa; white-space: pre-line; }
   </style>
 </head>
@@ -18,20 +16,13 @@
   <video id="video" autoplay playsinline muted></video>
   <canvas id="canvas" style="display:none;"></canvas>
   <div>
-    <input type="password" id="token" placeholder="GitHub 토큰(ghp_...) 입력">
-    <br>
-    <button onclick="startSystem()">자동 촬영 시작 (토큰 저장)</button>
-    <button onclick="captureAndUpload()" style="background:#007bff;">지금 1장 테스트 업로드</button>
+    <button onclick="captureAndSend()" style="background:#007bff;">지금 1장 테스트 업로드</button>
   </div>
-  <div id="log">대기 중... (정각 08:00, 12:00, 16:00, 20:00 자동 업로드)</div>
+  <div id="log">정각(08:00, 12:00, 16:00, 20:00) 자동 감시 중...</div>
 
   <script>
-    const REPO = "mdk880812/lettuce-lab";
     const TARGET_HOURS = new Array(8, 12, 16, 20);
     let lastUploadedKey = "";
-
-    const savedToken = localStorage.getItem("gh_token");
-    if (savedToken) document.getElementById("token").value = savedToken;
 
     async function initCamera() {
       try {
@@ -50,72 +41,39 @@
 
     function log(msg) {
       const now = new Date().toLocaleTimeString("ko-KR", { hour12: false });
-      document.getElementById("log").innerText = `[${now}] ${msg}\n` + document.getElementById("log").innerText.slice(0, 500);
+      document.getElementById("log").innerText = `[${now}] ${msg}\n` + document.getElementById("log").innerText.slice(0, 400);
     }
 
     function getJSTParts() {
       const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
-      const yyyy = now.getFullYear();
-      const mm = String(now.getMonth() + 1).padStart(2, "0");
-      const dd = String(now.getDate()).padStart(2, "0");
-      const HH = String(now.getHours()).padStart(2, "0");
-      const MM = String(now.getMinutes()).padStart(2, "0");
-      return { hour: now.getHours(), min: now.getMinutes(), stamp: `${yyyy}-${mm}-${dd}_${HH}${MM}`, key: `${yyyy}-${mm}-${dd}_${HH}` };
+      return {
+        hour: now.getHours(),
+        min: now.getMinutes(),
+        key: `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}_${now.getHours()}`
+      };
     }
 
-    function captureAndUpload() {
-      const token = document.getElementById("token").value.replace(/[^a-zA-Z0-9_]/g, "");
-      if (!token) return alert("GitHub 토큰을 먼저 입력해주세요!");
-      document.getElementById("token").value = token;
-      localStorage.setItem("gh_token", token);
-
+    function captureAndSend() {
       const video = document.getElementById("video");
       const canvas = document.getElementById("canvas");
       canvas.width = video.videoWidth || 1280;
       canvas.height = video.videoHeight || 720;
       canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      const base64Data = canvas.toDataURL("image/jpeg", 0.8).split(",").pop();
-      const { stamp } = getJSTParts();
-      const url = `https://github.com{REPO}/contents/photo/${stamp}.jpg`;
-
-      log(`업로드 중: photo/${stamp}.jpg ...`);
-      const xhr = new XMLHttpRequest();
-      xhr.open("PUT", url, true);
-      xhr.setRequestHeader("Authorization", "Bearer " + token);
-      xhr.setRequestHeader("Accept", "application/vnd.github+json");
-      xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4) {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            log(`업로드 성공! photo/${stamp}.jpg`);
-          } else {
-            log(`업로드 실패 (상태코드 ${xhr.status}): ${xhr.responseText.slice(0, 80)}`);
-          }
-        }
-      };
-      xhr.onerror = function () {
-        log("네트워크/연결 차단 오류 (와이파이 또는 토큰 확인 필요)");
-      };
-      xhr.send(JSON.stringify({ message: `Add plant photo ${stamp}`, content: base64Data }));
+      const base64Data = canvas.toDataURL("image/jpeg", 0.75).split(",").pop();
+      log("무음 캡처 완료 -> 단축어 업로드 전송!");
+      window.location.href = "shortcuts://run-shortcut?name=" + encodeURIComponent("업로드") + "&input=text&text=" + encodeURIComponent(base64Data);
     }
 
-    function startSystem() {
-      const token = document.getElementById("token").value.replace(/[^a-zA-Z0-9_]/g, "");
-      if (!token) return alert("GitHub 토큰을 먼저 입력해주세요!");
-      localStorage.setItem("gh_token", token);
-      log("정각 자동 감시 시작 (08:00, 12:00, 16:00, 20:00)");
-
-      setInterval(() => {
-        const { hour, min, key } = getJSTParts();
-        if (TARGET_HOURS.includes(hour) && min === 0 && lastUploadedKey !== key) {
-          lastUploadedKey = key;
-          captureAndUpload();
-        }
-      }, 10000);
-    }
+    setInterval(() => {
+      const { hour, min, key } = getJSTParts();
+      if (TARGET_HOURS.includes(hour) && min === 0 && lastUploadedKey !== key) {
+        lastUploadedKey = key;
+        captureAndSend();
+      }
+    }, 10000);
 
     initCamera();
-    if (savedToken) startSystem();
   </script>
 </body>
 </html>
