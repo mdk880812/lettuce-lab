@@ -3,12 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>상추 스마트팜 무음 카메라</title>
+  <title>상추 스마트팜 무인 카메라</title>
   <style>
     body { background: #000; color: #0f0; font-family: monospace; padding: 16px; text-align: center; }
     video { width: 100%; max-width: 480px; border: 1px solid #333; border-radius: 8px; }
-    button { font-size: 16px; padding: 12px 20px; margin: 8px; border-radius: 6px; border: none; background: #28a745; color: #fff; font-weight: bold; }
-    #log { margin-top: 12px; font-size: 13px; color: #aaa; white-space: pre-line; }
+    button { font-size: 16px; padding: 12px 18px; margin: 6px; border-radius: 6px; border: none; color: #fff; font-weight: bold; }
+    #btnStart { background: #28a745; }
+    #btnTest { background: #007bff; }
+    #status { margin-top: 8px; font-size: 14px; color: #ffd700; font-weight: bold; }
+    #log { margin-top: 10px; font-size: 13px; color: #aaa; white-space: pre-line; }
   </style>
 </head>
 <body>
@@ -16,27 +19,39 @@
   <video id="video" autoplay playsinline muted></video>
   <canvas id="canvas" style="display:none;"></canvas>
   <div>
-    <button onclick="captureAndSend()" style="background:#007bff;">지금 1장 테스트 업로드</button>
+    <button id="btnStart" onclick="startMonitor()">정각 자동 감시 시작</button>
+    <button id="btnTest" onclick="captureAndSend()">지금 1장 테스트 업로드</button>
   </div>
-  <div id="log">정각(08:00, 12:00, 16:00, 20:00) 자동 감시 중...</div>
+  <div id="status">현재 상태: 대기 중 (감시 꺼짐)</div>
+  <div id="log">카메라 연결 중...</div>
 
   <script>
     const TARGET_HOURS = new Array(8, 12, 16, 20);
-    let lastUploadedKey = "";
+    let lastUploadedKey = localStorage.getItem("last_uploaded_key") || "";
+    let isCameraReady = false;
+    let monitorTimer = null;
 
     async function initCamera() {
+      const video = document.getElementById("video");
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: { exact: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
           audio: false
         });
-        document.getElementById("video").srcObject = stream;
-        log("후면 카메라 연결 완료 (0dB 무음 모드)");
+        video.srcObject = stream;
       } catch (e) {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
-        document.getElementById("video").srcObject = stream;
-        log("후면 카메라 연결 완료");
+        video.srcObject = stream;
       }
+      video.onloadeddata = () => {
+        setTimeout(() => {
+          isCameraReady = true;
+          log("후면 카메라 예열 완료 (0dB 무음 준비됨)");
+          if (localStorage.getItem("auto_monitor") === "on") {
+            startMonitor();
+          }
+        }, 1500);
+      };
     }
 
     function log(msg) {
@@ -55,9 +70,14 @@
 
     function captureAndSend() {
       const video = document.getElementById("video");
+      if (!isCameraReady || video.videoWidth === 0) {
+        log("카메라 예열 중... 1.5초 후 촬영합니다.");
+        setTimeout(captureAndSend, 1500);
+        return;
+      }
       const canvas = document.getElementById("canvas");
-      canvas.width = video.videoWidth || 1280;
-      canvas.height = video.videoHeight || 720;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
       canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
 
       const base64Data = canvas.toDataURL("image/jpeg", 0.75).split(",").pop();
@@ -65,13 +85,23 @@
       window.location.href = "shortcuts://run-shortcut?name=" + encodeURIComponent("업로드") + "&input=text&text=" + encodeURIComponent(base64Data);
     }
 
-    setInterval(() => {
-      const { hour, min, key } = getJSTParts();
-      if (TARGET_HOURS.includes(hour) && min === 0 && lastUploadedKey !== key) {
-        lastUploadedKey = key;
-        captureAndSend();
-      }
-    }, 10000);
+    function startMonitor() {
+      localStorage.setItem("auto_monitor", "on");
+      document.getElementById("status").innerText = "현재 상태: 정각 자동 감시 작동 중 (08, 12, 16, 20시)";
+      document.getElementById("btnStart").style.background = "#555";
+      document.getElementById("btnStart").innerText = "자동 감시 작동 중";
+      if (monitorTimer) return;
+
+      log("정각 자동 감시 시작됨");
+      monitorTimer = setInterval(() => {
+        const { hour, min, key } = getJSTParts();
+        if (TARGET_HOURS.includes(hour) && min === 0 && lastUploadedKey !== key) {
+          lastUploadedKey = key;
+          localStorage.setItem("last_uploaded_key", key);
+          captureAndSend();
+        }
+      }, 10000);
+    }
 
     initCamera();
   </script>
