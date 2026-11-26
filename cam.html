@@ -25,13 +25,13 @@
   <div>
     <button id="btnStart" onclick="startMonitor()">정각 자동 감시 시작</button>
     <button id="btnStop" onclick="stopMonitor()">자동 감시 정지</button>
-    <button id="btnTest" onclick="captureAndSend()">지금 1장 테스트 업로드</button>
+    <button id="btnTest" onclick="captureAndSend()">1장 테스트 업로드</button>
   </div>
   <div id="status">현재 상태: 대기 중 (감시 꺼짐)</div>
   <div id="log">카메라 연결 중...</div>
 
   <script>
-    const TARGET_HOURS = new Array(8, 12, 16, 20);
+    const TARGET_HOURS = new Array(8, 12, 16, 20, 21);
     let lastUploadedKey = localStorage.getItem("last_uploaded_key") || "";
     let isCameraReady = false;
     let monitorTimer = null;
@@ -104,7 +104,7 @@
       log("정각 자동 감시 시작됨");
       monitorTimer = setInterval(() => {
         const { hour, min, key } = getJSTParts();
-        if (TARGET_HOURS.includes(hour) && min === 0 && lastUploadedKey !== key) {
+        if (TARGET_HOURS.includes(hour) && min === 23 && lastUploadedKey !== key) {
           lastUploadedKey = key;
           localStorage.setItem("last_uploaded_key", key);
           captureAndSend();
